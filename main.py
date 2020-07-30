@@ -285,8 +285,8 @@ for epoch in range(opt.epochs):
     ti = time.strftime("%m_%d_%H_%M")
     # Checkpoint
     if (epoch % opt.checkpoint_every == 0) or (epoch == (opt.epochs - 1)):
-        torch.save(netG, '%s/%s/%s%s_netG_epoch_%d.pth' % (opt.outf,ti,opt.city,opt.run_tag, epoch))
-        torch.save(netD, '%s/%s/%s%s_netD_epoch_%d.pth' % (opt.outf,ti,opt.city,opt.run_tag, epoch))
+        torch.save(netG, '%s/%s%s%s_netG_epoch_%d.pth' % (opt.outf,ti,opt.city,opt.run_tag, epoch))
+        torch.save(netD, '%s/%s%s%s_netD_epoch_%d.pth' % (opt.outf,ti,opt.city,opt.run_tag, epoch))
 
 x1 = range(0,int(opt.epochs))
 x2 = range(0,opt.epochs)
