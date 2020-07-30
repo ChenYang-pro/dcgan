@@ -301,7 +301,7 @@ plt.plot(x2,y2, '.-')
 plt.xlabel('G-Loss')
 plt.ylabel("DCGAN-LOSS")
 # ti = datetime.datetime.now() 
-s ='images/loss_' +  time.strftime("%m_%d_%H_%M") + '.jpg'
+s = opt.imf + '/loss_' +  time.strftime("%m_%d_%H_%M") + '.jpg'
 
 plt.savefig(s)
                              
