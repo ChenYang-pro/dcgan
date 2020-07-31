@@ -21,10 +21,10 @@ import time
 # 命令行参数
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default="npz", help='dataset to use (only btp for now)')
-parser.add_argument('--dataset_path', default='data/npy', help='path to dataset')
+parser.add_argument('--dataset_path', default='data/npz', help='path to dataset')
 parser.add_argument('--city', help='path to dataset for city',default='I80')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=0)
-parser.add_argument('--batchSize', type=int, default=16, help='input batch size')
+parser.add_argument('--batchSize', type=int, default=20, help='input batch size')
 parser.add_argument('--nz', type=int, default=256, help='dimensionality of the latent vector z')
 parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.0002, help='learning rate, default=0.0002')
@@ -93,7 +93,7 @@ if opt.dataset =='npz':
 assert dataset
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batchSize,
                                          shuffle=True, num_workers=int(opt.workers))
-
+# print("len(dataloader:{}".format(len(dataloader)))
 device = torch.device("cuda:0" if opt.cuda else "cpu")
 # device = torch.device("cpu")
 nz = int(opt.nz)
@@ -205,7 +205,7 @@ for epoch in range(opt.epochs):
     
         label.fill_(fake_label)
         output = netD(fake.detach())
-        # print("output:{}".format(output))
+        # print("output:{}".format(output.shape))
         errD_fake = criterion(output, label)
         errD_fake.backward()
         D_G_z1 = output.mean().item()

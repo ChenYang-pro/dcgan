@@ -38,7 +38,7 @@ class npz_Dataset(Dataset):
         Y_train = np.array(y_train_temp)
         X_test = np.array(x_test_temp)
         Y_test = np.array(y_test_temp)
-        for i in range(1,300):
+        for i in range(1,660):
             x_train = np.load(self.root_dir + '/x_train_'+ str(i) +'.npy', allow_pickle=True)
             X_train = np.vstack((X_train,x_train))
             y_train = np.load(self.root_dir + '/y_train_'+ str(i) +'.npy', allow_pickle=True)
@@ -46,7 +46,7 @@ class npz_Dataset(Dataset):
             # X_data = np.concatenate([X_train], axis=0)     
             # y_data = np.concatenate([y_train]) 
             # X_data = np.concatenate([X_train,X_test], axis=0)
-        for j in range(1,100):
+        for j in range(1,140):
             x_test = np.load(self.root_dir +'/x_test_'+ str(j) +'.npy' ,allow_pickle=True)
             X_test = np.vstack((X_test,x_test))
             y_test = np.load(self.root_dir +'/y_test_'+ str(j) +'.npy' ,allow_pickle=True)
@@ -108,7 +108,7 @@ class npz_Dataset(Dataset):
 
     def reshape(self,x):
         # x = x[:,0:-114]
-        # 如果在这里把data reshape成397 * [4*4*1]
+        # reshape 800*1*4*4
         x = x.reshape((int(x.shape[0] / self.dim_len), int(x.shape[1] / self.SEQ_len), self.dim_len, self.SEQ_len))
         print(x.shape)
         return x
