@@ -147,7 +147,7 @@ if opt.delta_condition:
     fixed_noise = torch.cat((fixed_noise, deltas), dim=2)
 
 real_label = 0.9
-fake_label = 0.2
+fake_label = 0.1
 
 # setup optimizer
 optimizerD = optim.Adam(netD.parameters(), lr=opt.lr)
