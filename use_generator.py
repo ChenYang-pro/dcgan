@@ -10,7 +10,7 @@ parser.add_argument('--looptimes', default=40, help='generate_data num=looptime*
 opt = parser.parse_args()
 
 def generate():
-    for i in range(opt.looptimes):
+    for i in range(int(opt.looptimes)):
         x = torch.randn(20,1,256)
         # print(x)
         netG = torch.load(opt.pth)
