@@ -23,7 +23,7 @@ def generate():
         # print(type(data))
         # print(data.shape)
         # save data
-        np.save('generate_data/G_data_' + str(i),data)
+        np.save(str(opt.savepath) + '/G_data_' + str(i),data)
 
 if __name__ == "__main__":
     generate()
