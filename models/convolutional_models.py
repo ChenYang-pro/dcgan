@@ -26,7 +26,7 @@ class convolution_d(nn.Module):
             nn.Conv2d(16, 32, kernel_size,stride,padding),
             # nn.BatchNorm2d(32),
             # nn.LeakyReLU(0.2,inplace=True),
-            nn.SELU(32)
+            nn.SELU(32),
             nn.Dropout(dropout)
         )
 
