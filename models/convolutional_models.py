@@ -8,22 +8,25 @@ class convolution_d(nn.Module):
         super().__init__()
         self.layer1 = nn.Sequential(
             nn.Conv2d(input_size, 8, kernel_size,stride,padding),
-            nn.BatchNorm2d(8),
-            nn.LeakyReLU(0.2,inplace=True),
+            # nn.BatchNorm2d(8),
+            # nn.LeakyReLU(0.2,inplace=True),
+            nn.SELU(8),
             nn.Dropout(dropout)
         )
 
         self.layer2 = nn.Sequential(
             nn.Conv2d(8, 16, kernel_size,stride,padding),
-            nn.BatchNorm2d(16),
-            nn.LeakyReLU(0.2,inplace=True),
+            # nn.BatchNorm2d(16),
+            # nn.LeakyReLU(0.2,inplace=True),
+            nn.SELU(16),
             nn.Dropout(dropout)
         )
 
         self.layer3 = nn.Sequential(
             nn.Conv2d(16, 32, kernel_size,stride,padding),
-            nn.BatchNorm2d(32),
-            nn.LeakyReLU(0.2,inplace=True),
+            # nn.BatchNorm2d(32),
+            # nn.LeakyReLU(0.2,inplace=True),
+            nn.SELU(32)
             nn.Dropout(dropout)
         )
 
