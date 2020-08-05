@@ -146,7 +146,7 @@ if opt.delta_condition:
     deltas = dataset.sample_deltas(opt.batchSize).unsqueeze(2).repeat(1, seq_len, 1)
     fixed_noise = torch.cat((fixed_noise, deltas), dim=2)
 
-real_label = 0.9
+real_label = 0.95
 fake_label = 0.0
 
 # setup optimizer
