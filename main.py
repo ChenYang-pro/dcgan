@@ -146,8 +146,8 @@ if opt.delta_condition:
     deltas = dataset.sample_deltas(opt.batchSize).unsqueeze(2).repeat(1, seq_len, 1)
     fixed_noise = torch.cat((fixed_noise, deltas), dim=2)
 
-real_label = 0.9
-fake_label = 0.1
+real_label = 1.2
+fake_label = 0.2
 
 # setup optimizer
 optimizerD = optim.Adam(netD.parameters(), lr=opt.lr)
@@ -209,6 +209,7 @@ for epoch in range(opt.epochs):
         errD_fake = criterion(output, label)
         errD_fake.backward()
         D_G_z1 = output.mean().item()
+        # 推导
         errD = errD_real + errD_fake
         optimizerD.step()
         
