@@ -21,12 +21,12 @@ import time
 # 命令行参数
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default="npz", help='dataset to use (only btp for now)')
-parser.add_argument('--dataset_path', default='data/npz', help='path to dataset')
+parser.add_argument('--dataset_path', default='data/npz201801', help='path to dataset')
 parser.add_argument('--city', help='path to dataset for city',default='I80')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=0)
 parser.add_argument('--batchSize', type=int, default=20, help='input batch size')
 parser.add_argument('--nz', type=int, default=256, help='dimensionality of the latent vector z')
-parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train for')
+parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.0002, help='learning rate, default=0.0002')
 parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--netG', default='', help="path to netG (to continue training)")
@@ -284,6 +284,10 @@ for epoch in range(opt.epochs):
     g_error.append(errG)
     d_error.append(errD)
     ti = time.strftime("%m-%d-%H:%M")
+    print("=====================================")
+    print(ti)
+    # print("=====================================")
+    
     # Checkpoint
     if (epoch % opt.checkpoint_every == 0) or (epoch == (opt.epochs - 1)):
         torch.save(netG, '%s/%s%s-%s_netG_epoch_%d.pth' % (opt.outf,ti,opt.city,opt.run_tag, epoch))
@@ -303,6 +307,8 @@ plt.xlabel('G-Loss')
 plt.ylabel("DCGAN-LOSS")
 # ti = datetime.datetime.now() 
 s = opt.imf + 'loss_' +  time.strftime("%m-%d-%H:%M") + '.jpg'
-
+print("=====================================")
+print(time.strftime("%m-%d-%H:%M"))
+# print("=====================================")
 plt.savefig(s)
                              
