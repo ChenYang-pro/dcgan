@@ -18,7 +18,8 @@ from npz_dataset import npz_Dataset
 import matplotlib.pyplot as plt
 import numpy as np
 import time 
-# 命令行参数
+from torch.autograd import Variable
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default="npz", help='dataset to use (only btp for now)')
 parser.add_argument('--dataset_path', default='data/npz201801', help='path to dataset')
@@ -26,7 +27,7 @@ parser.add_argument('--city', help='path to dataset for city',default='I80')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=0)
 parser.add_argument('--batchSize', type=int, default=20, help='input batch size')
 parser.add_argument('--nz', type=int, default=256, help='dimensionality of the latent vector z')
-parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train for')
+parser.add_argument('--epochs', type=int, default=20, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.0002, help='learning rate, default=0.0002')
 parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--netG', default='', help="path to netG (to continue training)")
@@ -38,7 +39,7 @@ parser.add_argument('--logdir', default='log', help='logdir for tensorboard')
 parser.add_argument('--run_tag', default='', help='tags for the current run')
 parser.add_argument('--real', default=1, help='real lable')
 parser.add_argument('--fake', default=0, help='fake label')
-parser.add_argument('--optimizer', default='Adam', help='optimizer')
+parser.add_argument('--optimizer', default='RMSprop', help='optimizer')
 parser.add_argument('--checkpoint_every', default=5, help='number of epochs after which saving checkpoints') 
 parser.add_argument('--tensorboard_image_every', default=5, help='interval for displaying images on tensorboard') 
 parser.add_argument('--delta_condition', action='store_true', help='whether to use the mse loss for deltas')          #??????????????????????????????
@@ -91,6 +92,13 @@ if opt.dataset == "accident":
 if opt.dataset =='npz':
     dataset = npz_Dataset(opt.dataset_path, 4 ,4)
 
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        m.weight.data.normal_(0.0, 0.02)
+    elif classname.find('BatchNorm') != -1:
+        m.weight.data.normal_(1.0, 0.02)
+        m.bias.data.fill_(0)
 
 # 断言
 assert dataset
@@ -102,10 +110,6 @@ device = torch.device("cuda:0" if opt.cuda else "cpu")
 nz = int(opt.nz)
 #Retrieve the sequence length as first dimension of a sequence in the dataset
 seq_len = dataset[0].size(0)
-# print("seq_len:",seq_len)
-# print("dataloade.data.shape",dataloader.dataset.data.shape)
-# print("dataloade.data",dataloader.dataset.data)
-#An additional input is needed for the delta
 in_dim = opt.nz + 1 if opt.delta_condition else opt.nz
 
 if opt.dis_type == "lstm": 
@@ -133,34 +137,36 @@ if opt.netD != '':
 print("|Discriminator Architecture|\n", netD)
 print("|Generator Architecture|\n", netG)
 
-# 对一个batch里数据二元交叉熵并且求平均
+
 criterion = nn.BCELoss().to(device)
-# 对一个batch里数据求均方误差
+
 delta_criterion = nn.MSELoss().to(device)
 
 #Generate fixed noise to be used for visualization
 
 fixed_noise = torch.randn(opt.batchSize, seq_len, nz, device=device)
-# print(fixed_noise.shape)
-# print('==========================')
+
 
 if opt.delta_condition:
     #Sample both deltas and noise for visualization
     deltas = dataset.sample_deltas(opt.batchSize).unsqueeze(2).repeat(1, seq_len, 1)
     fixed_noise = torch.cat((fixed_noise, deltas), dim=2)
 
-real_label = opt.real
-fake_label = opt.fake
+real_label = 0.93
+fake_label = 0.07
+one = torch.FloatTensor([1])
+mone = one * -1
+input = torch.FloatTensor(opt.batchSize, 1, 4, 4)
 
 # setup optimizer
 if opt.optimizer == 'Adam':
-    optimizerD = optim.Adam(netD.parameters(), lr=opt.lr,betas=(0.5, 0.999))
-    optimizerG = optim.Adam(netG.parameters(), lr=opt.lr,betas=(0.5, 0.999))
+    optimizerD = optim.Adam(netD.parameters(), lr=opt.lr,betas=(opt.beta1, 0.999))
+    optimizerG = optim.Adam(netG.parameters(), lr=opt.lr,betas=(opt.beta1, 0.999))
     print("======================================")
     print("optimizer:Adam")
 elif opt.optimizer == 'RMSprop':
-    optimizerD = optim.RMSprop(netD.parameters(), lr = opt.lrD)
-    optimizerG = optim.RMSprop(netG.parameters(), lr = opt.lrG)
+    optimizerD = optim.RMSprop(netD.parameters(), lr = opt.lr)
+    optimizerG = optim.RMSprop(netG.parameters(), lr = opt.lr)
     print("======================================")
     print("optimizer:RMSprop")
 
@@ -182,47 +188,37 @@ for epoch in range(opt.epochs):
         ###########################
 
         #Train with real data
-        # 把梯度置零
         netD.zero_grad()
-        real = data.to(device)
-        # print("data.to(device):",real)
-        batch_size, seq_len = real.size(0), real.size(1)
-        # 标签
-        label = torch.full((batch_size, seq_len, 1), real_label, device=device)
 
-        output = netD(real)
-        # print('output:{}'.format(output.shape))
-        # print('real:{}'.format(real.shape))
-        # print('==============================')
-        errD_real = criterion(output, label)
-        errD_real.backward()
+        real_cpu = data
+        input.resize_as_(real_cpu).copy_(real_cpu)
+        inputv = Variable(input)
+        # real = data.to(device)
+        batch_size, seq_len = real_cpu.size(0), real_cpu.size(1)
+        output = netD(inputv)
+        # errD_real = criterion(output, label)
+        errD_real = output
+        errD_real.backward(one)
         D_x = output.mean().item()
         
-        #Train with fake data
-        # data = torch.normal(mean=0.0,std=torch.arange(0.2,16*256))
-        # noise = data.reshape(16,1,256)
-        # noise = noise.reshape(opt.batchSize, seq_len, nz)
-        
         noise = torch.randn(opt.batchSize, seq_len, nz, device=device)
-        # print(noise.shape)
-        # print('==========================')
+        noisev = Variable(noise, volatile = True)
         if opt.delta_condition:
             #Sample a delta for each batch and concatenate to the noise for each timestep
             deltas = dataset.sample_deltas(batch_size).unsqueeze(2).repeat(1, seq_len, 1)
             noise = torch.cat((noise, deltas), dim=2)
 
-        # print(noise.shape)
-        # print("=============================================")
-        fake = netG(noise)
+
+        fake = Variable(netG(noise))
     
-        label.fill_(fake_label)
+        # label.fill_(fake_label)
         output = netD(fake.detach())
-        # print("output:{}".format(output.shape))
-        errD_fake = criterion(output, label)
-        errD_fake.backward()
+        # errD_fake = criterion(output, label)
+        errD_fake = output
+        errD_fake.backward(mone)
         D_G_z1 = output.mean().item()
         # 推导
-        errD = errD_real + errD_fake
+        errD = errD_real - errD_fake
         optimizerD.step()
         
         #Visualize discriminator gradients
@@ -233,10 +229,11 @@ for epoch in range(opt.epochs):
         # (2) Update G network: maximize log(D(G(z)))
         ###########################
         netG.zero_grad()
-        label.fill_(real_label) 
+        # label.fill_(real_label) 
         output = netD(fake)
-        errG = criterion(output, label)
-        errG.backward()
+        # errG = criterion(output, label)
+        errG = output
+        errG.backward(one)
         D_G_z2 = output.mean().item()
         
 
@@ -248,10 +245,11 @@ for epoch in range(opt.epochs):
             noise = torch.randn(batch_size, seq_len, nz, device=device)
             deltas = dataset.sample_deltas(batch_size).unsqueeze(2).repeat(1, seq_len, 1)
             noise = torch.cat((noise, deltas), dim=2)
+            noisev = Variable(noise,volatile=True)
             #Generate sequence given noise w/ deltas and deltas
             out_seqs = netG(noise)
             delta_loss = opt.delta_lambda * delta_criterion(out_seqs[:, -1] - out_seqs[:, 0], deltas[:,0])
-            delta_loss.backward()
+            delta_loss.backward(one)
         
         optimizerG.step()
         
@@ -276,29 +274,13 @@ for epoch in range(opt.epochs):
           writer.add_scalar('GeneratorLoss', errG.item(), niter)
           writer.add_scalar('D of X', D_x, niter) 
           writer.add_scalar('D of G of z', D_G_z1, niter)
-        
-    ##### End of the epoch #####
-    # real_plot = time_series_to_plot(dataset.denormalize(real_display))
-    # real_plot = time_series_to_plot(real_display)
-    # # 画出real的曲线图
-    # if (epoch % opt.tensorboard_image_every == 0) or (epoch == (opt.epochs - 1)):
-    #     writer.add_image("Real", real_plot, epoch)
-    
-    # # fake = netG(fixed_noise)
-    # # print(fake.type)
-    # # print("======================")
-    # # fake_plot = time_series_to_plot(dataset.denormalize(fake))
-    # fake_plot = time_series_to_plot(fake)   
-    # torchvision.utils.save_image(fake_plot, os.path.join(opt.imf, opt.city + opt.run_tag+'_epoch'+str(epoch)+'.jpg'))
-    # if (epoch % opt.tensorboard_image_every == 0) or (epoch == (opt.epochs - 1)):
-    #     writer.add_image("Fake", fake_plot, epoch)
+
     ###############画loss曲线##############
     g_error.append(errG)
     d_error.append(errD)
     ti = time.strftime("%m-%d-%H:%M")
     print("=====================================")
     print(ti)
-    # print("=====================================")
     
     # Checkpoint
     if (epoch % opt.checkpoint_every == 0) or (epoch == (opt.epochs - 1)):
@@ -317,10 +299,8 @@ plt.subplot(2, 1, 2)
 plt.plot(x2,y2, '.-')
 plt.xlabel('G-Loss')
 plt.ylabel("DCGAN-LOSS")
-# ti = datetime.datetime.now() 
 s = opt.imf + 'loss_' +  time.strftime("%m-%d-%H:%M") + '.jpg'
 print("=====================================")
 print(time.strftime("%m-%d-%H:%M"))
-# print("=====================================")
 plt.savefig(s)
                              
