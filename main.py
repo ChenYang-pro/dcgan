@@ -36,8 +36,8 @@ parser.add_argument('--imf', default='images', help='folder to save images')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--logdir', default='log', help='logdir for tensorboard')
 parser.add_argument('--run_tag', default='', help='tags for the current run')
-parser.add_argument('--real', default=1, help='real lable')
-parser.add_argument('--fake', default=0, help='fake label')
+parser.add_argument('--real', default=1.0, help='real lable')
+parser.add_argument('--fake', default=0.0, help='fake label')
 parser.add_argument('--optimizer', default='Adam', help='optimizer')
 parser.add_argument('--checkpoint_every', default=5, help='number of epochs after which saving checkpoints') 
 parser.add_argument('--tensorboard_image_every', default=5, help='interval for displaying images on tensorboard') 
@@ -188,7 +188,7 @@ for epoch in range(opt.epochs):
         # print("data.to(device):",real)
         batch_size, seq_len = real.size(0), real.size(1)
         # 标签
-        label = torch.full((batch_size, seq_len, 1), real_label, device=device)
+        label = torch.full((batch_size, seq_len), real_label, device=device)
 
         output = netD(real)
         # print('output:{}'.format(output.shape))
@@ -296,8 +296,8 @@ for epoch in range(opt.epochs):
     g_error.append(errG)
     d_error.append(errD)
     ti = time.strftime("%m-%d-%H:%M")
-    print("=====================================")
-    print(ti)
+    # print("=====================================")
+    # print(ti)
     # print("=====================================")
     
     # Checkpoint
@@ -319,8 +319,8 @@ plt.xlabel('G-Loss')
 plt.ylabel("DCGAN-LOSS")
 # ti = datetime.datetime.now() 
 s = opt.imf + 'loss_' +  time.strftime("%m-%d-%H:%M") + '.jpg'
-print("=====================================")
-print(time.strftime("%m-%d-%H:%M"))
+# print("=====================================")
+# print(time.strftime("%m-%d-%H:%M"))
 # print("=====================================")
 plt.savefig(s)
                              
