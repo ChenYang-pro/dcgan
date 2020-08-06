@@ -23,7 +23,8 @@ def generate():
         # print(type(data))
         # print(data.shape)
         # save data
-        np.save(str(opt.savepth) + '/G_data_' + str(i),data)
+        ti = time.strftime("%m-%d-%H:%M")
+        np.save(str(opt.savepth) + '/G_data_' + ti + str(i),data)
 
 if __name__ == "__main__":
     generate()
