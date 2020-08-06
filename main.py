@@ -36,6 +36,8 @@ parser.add_argument('--imf', default='images', help='folder to save images')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--logdir', default='log', help='logdir for tensorboard')
 parser.add_argument('--run_tag', default='', help='tags for the current run')
+parser.add_argument('--real', default=1, help='real lable')
+parser.add_argument('--fake', default=0, help='fake label')
 parser.add_argument('--checkpoint_every', default=5, help='number of epochs after which saving checkpoints') 
 parser.add_argument('--tensorboard_image_every', default=5, help='interval for displaying images on tensorboard') 
 parser.add_argument('--delta_condition', action='store_true', help='whether to use the mse loss for deltas')          #??????????????????????????????
