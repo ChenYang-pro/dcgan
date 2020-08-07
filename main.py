@@ -188,7 +188,7 @@ for epoch in range(opt.epochs):
         # print("data.to(device):",real)
         batch_size, seq_len = real.size(0), real.size(1)
         # 标签
-        label = torch.full((batch_size, seq_len), real_label, device=device)
+        label = torch.full((int(batch_size), int(seq_len)), real_label, device=device)
 
         output = netD(real)
         # print('output:{}'.format(output.shape))
